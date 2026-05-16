@@ -126,7 +126,7 @@ const ChatPage = () => {
   if (!user) return;
 
   return (
-    <div className="flex h-[calc(100vh-64px)] lg:h-screen max-h-screen">
+    <div className="flex h-screen max-h-screen">
       <section className="md:w-90 border-r border-gray-300 ">
         <div className="flex flex-col gap-6 p-5">
           <div className="mt-5 flex justify-between items-center">

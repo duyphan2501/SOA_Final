@@ -107,7 +107,11 @@ Enter Password: 123456
 
 Thông tin database:
 * Xem trong scripts hoặc server/sql
+* Tài khoản demo:
+    - username: jane_smith
+    - username: john_doe
 * Mật khẩu các account: 1234
+
 
 # Dừng project
 

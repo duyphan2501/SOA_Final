@@ -488,7 +488,7 @@ const Sidebar = () => {
 
           {/* Main Content */}
           <main
-            className={`flex-1 overflow-auto bg-gray-50 pb-16 lg:pb-0 transition-all duration-300 ${
+            className={`flex-1 overflow-auto bg-gray-50 lg:pb-0 transition-all duration-300 ${
               isCollapsed ? "ml-20" : "md:ml-64"
             }`}
           >

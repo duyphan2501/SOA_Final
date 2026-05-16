@@ -171,7 +171,12 @@ services:
       PORT: ${GATEWAY_PORT}
 
   client:
-    build: ./client
+    build: 
+      context: ./client
+      dockerfile: Dockerfile
+      args:
+        - VITE_API_URL=${REACT_APP_API}
+        - VITE_SOCKET_GATEWAY_URL=${REACT_APP_SOCKET}
     restart: on-failure
     networks:
       - finalsoa

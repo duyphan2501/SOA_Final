@@ -7,10 +7,9 @@ import ENV from "./helpers/env.helper.js";
 app.use(morgan("tiny"));
 app.use(
   cors({
-    // origin: ENV.CLIENT_URL,
-    origin: "http://localhost:5173",
+    origin: [ENV.CLIENT_URL, "http://localhost:5173"],
     credentials: true,
-  })
+  }),
 );
 
 const PORT = ENV.GATEWAY_PORT || 3000;
@@ -28,7 +27,7 @@ app.use(
     target: USER_TARGET,
     changeOrigin: true,
     pathRewrite: { "^/api/v1/users": "" },
-  })
+  }),
 );
 app.use(
   "/api/v1/chat",
@@ -36,7 +35,7 @@ app.use(
     target: CHAT_TARGET,
     changeOrigin: true,
     pathRewrite: { "^/api/v1/chat": "" },
-  })
+  }),
 );
 app.use(
   "/api/v1/friends",
@@ -44,7 +43,7 @@ app.use(
     target: FRIEND_TARGET,
     changeOrigin: true,
     pathRewrite: { "^/api/v1/friends": "" },
-  })
+  }),
 );
 
 app.use(
@@ -53,7 +52,7 @@ app.use(
     target: POST_TARGET,
     changeOrigin: true,
     pathRewrite: { "^/api/v1/posts": "" },
-  })
+  }),
 );
 
 app.use(
@@ -62,7 +61,7 @@ app.use(
     target: NOTIFICATION_TARGET,
     changeOrigin: true,
     pathRewrite: { "^/api/v1/notifications": "" },
-  })
+  }),
 );
 
 server.listen(PORT, () => console.log(`API Gateway on ${PORT}`));

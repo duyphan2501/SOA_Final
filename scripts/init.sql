@@ -44,7 +44,6 @@ VALUES
 ('jane_smith','jane@example.com','$2b$10$GwA5olt2.T1c49riSxoxYeOzbrIZRqpe2GWBjR.pkiC6yuMS5E27y','Jane Smith','https://ui-avatars.com/api/?name=jane&size=32&background=e3e8f0&color=0068FF&bold=true','Full-stack developer',NOW()),
 ('mike_nguyen','mike@example.com','$2b$10$GwA5olt2.T1c49riSxoxYeOzbrIZRqpe2GWBjR.pkiC6yuMS5E27y','Mike Nguyen','https://ui-avatars.com/api/?name=mike&size=32&background=e3e8f0&color=0068FF&bold=true','Tech blogger',NOW()),
 ('anna_tran','anna@example.com','$2b$10$GwA5olt2.T1c49riSxoxYeOzbrIZRqpe2GWBjR.pkiC6yuMS5E27y','Anna Tran','https://ui-avatars.com/api/?name=anna&size=32&background=e3e8f0&color=0068FF&bold=true','Designer',NOW()),
-('user_demo','demo@gmail.com','$2b$10$GwA5olt2.T1c49riSxoxYeOzbrIZRqpe2GWBjR.pkiC6yuMS5E27y','DEMO','https://ui-avatars.com/api/?name=duy&size=32&background=e3e8f0&color=0068FF&bold=true','Developer.',NOW());
 
 -- =====================================================
 -- CHAT DATABASE
