@@ -32,17 +32,17 @@ const ConversationItem = ({
           />
         </div>
       </div>
-      <div className="md:flex flex-1 flex-col justify-center gap-1 hidden ">
+      <div className="flex min-w-0 flex-1 flex-col justify-center gap-1">
         <p className="font-medium text-sm">{otherUser?.full_name}</p>
         <div
-          className={`flex items-center gap-2 text-nowrap text-gray-500 ${
+          className={`flex min-w-0 items-center gap-2 text-nowrap text-gray-500 ${
             conversation.message_status != "read" &&
             !isYou &&
             "font-semibold !text-black"
           }`}
         >
-          <p className=" line-clamp-1">{renderMessage()}</p>
-          <p className="">{formatRelativeTime(conversation.sent_at)}</p>
+          <p className="min-w-0 flex-1 truncate">{renderMessage()}</p>
+          <p className="shrink-0">{formatRelativeTime(conversation.sent_at)}</p>
         </div>
       </div>
     </div>

@@ -547,10 +547,6 @@ const Notification = ({isShow}) => {
   // Khi có dữ liệu, render bình thường
   return (
     <div className="h-full flex flex-col bg-white">
-      <div className="px-4 py-4 border-b border-gray-200">
-        <h2 className="text-2xl font-bold text-gray-900">Notification</h2>
-      </div>
-
       <div className="flex-1 overflow-y-auto">
         {notificationsData.friendRequest?.length > 0 && (
           <NotificationSection

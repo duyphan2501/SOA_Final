@@ -10,7 +10,7 @@ import useSocketStore from "../../stores/useSocketStore";
 import useMessageStore from "../../stores/useMessageStore";
 import { MyContext } from "../../Context/MyContext";
 
-const ChatMain = () => {
+const ChatMain = ({ onBack, onConversationMessageUpdate }) => {
   const {
     chatUser,
     selectedConversationId,
@@ -83,7 +83,7 @@ const ChatMain = () => {
   const updateMessageStatusInState = useCallback(({ messageId, status }) => {
     setMessages((prevMessages) =>
       prevMessages.map((msg) =>
-        msg.id === messageId ? { ...msg, status: status } : msg
+        String(msg.id) === String(messageId) ? { ...msg, status } : msg
       )
     );
   }, []);
@@ -97,11 +97,13 @@ const ChatMain = () => {
     // 2. Lắng nghe tin nhắn mới
     const handleReceiveMessage = (newMessage) => {
       if (!newMessage.status) newMessage.status = "sent";
-      if (newMessage.conversation_id !== selectedConversationId) {
+      if (
+        String(newMessage.conversation_id) !== String(selectedConversationId)
+      ) {
         return;
       }
       // If the message was sent by current user
-      if (newMessage.sender_id === user.id) {
+      if (String(newMessage.sender_id) === String(user.id)) {
         if (!newMessage.tempId) return;
         setMessages((prevMessages) => {
           const index = prevMessages.findIndex(
@@ -140,13 +142,6 @@ const ChatMain = () => {
           return newArr;
         });
 
-        updateMessageStatus(
-          selectedConversationId,
-          newMessage.id,
-          user.id,
-          "delivered",
-          axiosPrivate
-        );
       }
     };
 
@@ -252,8 +247,14 @@ const ChatMain = () => {
         tempId,
       };
 
-      await sendMessage(messageData, axiosPrivate);
-    } catch (error) {
+      const savedMessage = await sendMessage(messageData, axiosPrivate);
+      if (savedMessage) {
+        onConversationMessageUpdate?.({
+          ...savedMessage,
+          status: "sent",
+        });
+      }
+    } catch {
       // mark last message as error
       setMessages((prev) => {
         const updated = [...prev];
@@ -320,6 +321,7 @@ const ChatMain = () => {
           <div className="">
             <ChatHeader
               isChatUserOnline={onlineUsers.includes(chatUser.id.toString())}
+              onBack={onBack}
             />
           </div>
 
@@ -327,8 +329,8 @@ const ChatMain = () => {
           <div
             ref={messagesContainerRef}
             className="flex-1 overflow-y-auto p-4 bg-gray-50"
-            onClick={markChatAsRead} // Đánh dấu đã đọc khi click vào khung chat
-            onScroll={handleScroll} // Hoặc khi cuộn (tùy UX bạn chọn)
+            onClick={markChatAsRead}
+            onScroll={handleScroll}
           >
             {messages &&
               messages.map((message) => (
@@ -350,7 +352,7 @@ const ChatMain = () => {
         </section>
       ) : (
         // ... (Phần UI khi chưa chọn chatUser) ...
-        <section className="h-full flex justify-center items-center">
+        <section className="h-full lg:flex justify-center items-center hidden">
           <div className="flex flex-col justify-center items-center gap-1">
             <div className="p-4 rounded-full bg-black text-white size-20">
               <MessageCircleMore size={50} />

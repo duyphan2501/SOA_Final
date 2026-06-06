@@ -10,9 +10,10 @@ import {
   X,
 } from "lucide-react";
 import useAxiosPrivate from "../hooks/useAxiosPrivate";
+import { useNavigate } from "react-router-dom";
 
 // UserCard Component
-const UserCard = ({ user, onAction, loading }) => {
+const UserCard = ({ user, onAction, onViewProfile, loading }) => {
   const getButtonConfig = () => {
     switch (user.friendshipStatus) {
       case "accepted":
@@ -52,7 +53,12 @@ const UserCard = ({ user, onAction, loading }) => {
 
   return (
     <div className="flex items-center justify-between py-4 px-4 hover:bg-gray-50 transition-colors">
-      <div className="flex items-center gap-3 flex-1 min-w-0">
+      <button
+        type="button"
+        onClick={() => onViewProfile(user)}
+        className="flex min-w-0 flex-1 items-center gap-3 rounded-lg text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-400"
+        aria-label={`View ${user.username}'s profile`}
+      >
         {user?.avatar_url ? (
           <img
             src={
@@ -92,7 +98,7 @@ const UserCard = ({ user, onAction, loading }) => {
             </p>
           )}
         </div>
-      </div>
+      </button>
       {buttonConfig.action && (
         <button
           onClick={() => onAction(user, buttonConfig.action)}
@@ -240,8 +246,10 @@ const FriendsListModal = ({
 // Main App Component
 function SearchPage() {
   const axiosPrivate = useAxiosPrivate();
+  const navigate = useNavigate();
 
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -254,34 +262,63 @@ function SearchPage() {
   const [unfriendLoading, setUnfriendLoading] = useState(false);
 
   useEffect(() => {
-    loadUsers(searchQuery);
+    const query = searchQuery.trim();
+
+    if (!query) {
+      setDebouncedQuery("");
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setDebouncedQuery(query);
+    }, 300);
+
+    return () => window.clearTimeout(timeoutId);
   }, [searchQuery]);
 
-  // Load users or suggestions
-  const loadUsers = async (query) => {
-    setLoading(true);
-    setError(null);
+  useEffect(() => {
+    const controller = new AbortController();
 
-    try {
-      if (query.trim()) {
-        // Search users - FIXED: Changed from /friend/search/users to /friends/search/users
-        const response = await axiosPrivate.get(
-          `/friends/search/users?query=${encodeURIComponent(query)}&limit=20`
+    const loadUsers = async () => {
+      setLoading(true);
+      setError(null);
+
+      try {
+        if (debouncedQuery) {
+          const response = await axiosPrivate.get(
+            `/friends/search/users?query=${encodeURIComponent(debouncedQuery)}&limit=20`,
+            { signal: controller.signal }
+          );
+          setUsers(response.data.data.users || []);
+        } else {
+          const response = await axiosPrivate.get(
+            "/friends/search/suggestions?limit=20",
+            { signal: controller.signal }
+          );
+          setUsers(response.data.data.suggestions || []);
+        }
+      } catch (err) {
+        if (err.code === "ERR_CANCELED") return;
+
+        console.error("Error loading users:", err);
+        setError(
+          err.response?.data?.message ||
+            "The system is under maintenance. Please try again later."
         );
-        setUsers(response.data.data.users || []);
-      } else {
-        // Load suggestions - FIXED: Changed from /friend/search/suggestions to /friends/search/suggestions
-        const response = await axiosPrivate.get(
-          "/friends/search/suggestions?limit=20"
-        );
-        setUsers(response.data.data.suggestions || []);
+      } finally {
+        if (!controller.signal.aborted) {
+          setLoading(false);
+        }
       }
-    } catch (err) {
-      console.error("Error loading users:", err);
-      setError(err.response?.data?.message || "The system is under maintenance. Please try again later.");
-    } finally {
-      setLoading(false);
-    }
+    };
+
+    loadUsers();
+    return () => controller.abort();
+  }, [axiosPrivate, debouncedQuery]);
+
+  const handleViewProfile = (user) => {
+    if (!user?.username) return;
+    navigate(`/profile/${encodeURIComponent(user.username)}`);
   };
 
   // Handle user actions (send, accept, unfriend)
@@ -291,11 +328,9 @@ function SearchPage() {
     const userId = user.userId || user.id;
 
     try {
-      let response;
-
       switch (action) {
         case "send":
-          response = await axiosPrivate.post("/friends/request", {
+          await axiosPrivate.post("/friends/request", {
             targetUserId: userId,
             friendId: userId,
           });
@@ -310,7 +345,7 @@ function SearchPage() {
           break;
 
         case "accept":
-          response = await axiosPrivate.post("/friends/accept", {
+          await axiosPrivate.post("/friends/accept", {
             fromUserId: userId,
           });
 
@@ -325,7 +360,7 @@ function SearchPage() {
 
         case "unfriend":
           if (window.confirm(`Unfriend ${user.username}?`)) {
-            response = await axiosPrivate.delete("/friends/unfriend", {
+            await axiosPrivate.delete("/friends/unfriend", {
               data: { friendUserId: userId },
             });
 
@@ -445,6 +480,7 @@ function SearchPage() {
                   key={user.id}
                   user={user}
                   onAction={handleUserAction}
+                  onViewProfile={handleViewProfile}
                   loading={actionLoading}
                 />
               ))}

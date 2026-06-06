@@ -2,8 +2,9 @@ import { useContext, useEffect } from "react";
 import useSocketStore from "../../stores/useSocketStore";
 import { formatRelativeTime } from "../../utils/DateFormat";
 import { MyContext } from "../../Context/MyContext";
+import { ArrowLeft } from "lucide-react";
 
-const ChatHeader = ({ isChatUserOnline }) => {
+const ChatHeader = ({ isChatUserOnline, onBack }) => {
   const { mainSocket } = useSocketStore();
   const { chatUser, setChatUser } = useContext(MyContext);
 
@@ -22,11 +23,20 @@ const ChatHeader = ({ isChatUserOnline }) => {
   }, [mainSocket]);
 
   return (
-    <div className="p-4 border-b border-gray-200 ">
-      <div className="flex">
+    <div className="border-b border-gray-200 p-3 sm:p-4">
+      <div className="flex items-center">
         {/*  */}
 
-        <div className="flex gap-3">
+        <button
+          type="button"
+          onClick={onBack}
+          aria-label="Back to conversations"
+          className="mr-2 flex size-10 shrink-0 items-center justify-center rounded-full hover:bg-gray-100 lg:hidden"
+        >
+          <ArrowLeft size={22} />
+        </button>
+
+        <div className="flex min-w-0 gap-3">
           <a href={`/profile/${chatUser.username}`}>
             <div
               className={`avatar ${
@@ -44,7 +54,7 @@ const ChatHeader = ({ isChatUserOnline }) => {
             </div>
           </a>
           <div className="flex flex-1 flex-col justify-center">
-            <p className="font-medium ">{chatUser.full_name}</p>
+            <p className="truncate font-medium">{chatUser.full_name}</p>
             <div className="text-xs text-gray-600">
               {isChatUserOnline ? (
                 <p>Online</p>

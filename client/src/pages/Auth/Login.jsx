@@ -32,7 +32,7 @@ const Login = () => {
     } else {
       if (loginUser && !loginUser?.isVerified) {
         setVerifyUser(loginUser);
-        navigate("/verify-account");
+        navigate("/auth/verify-account");
       }
     }
   };
@@ -44,9 +44,9 @@ const Login = () => {
   };
 
   return (
-    <div className="rounded-xl shadow border-gray-100 bg-white z-10 w-100 overflow-hidden">
-      <form className="p-5" onSubmit={handleLogin}>
-        <h3 className="font-bold text-center mb-5 text-3xl uppercase title">
+    <div className="z-10 w-full max-w-md overflow-hidden rounded-xl border border-gray-100 bg-white shadow">
+      <form className="p-4 sm:p-6" onSubmit={handleLogin}>
+        <h3 className="title mb-5 text-center text-2xl font-bold uppercase sm:text-3xl">
           Login account
         </h3>
         <div className="flex gap-5 flex-col">
@@ -64,7 +64,7 @@ const Login = () => {
             label="Password"
           />
         </div>
-        <div className=" flex items-center justify-between mt-3">
+        <div className="mt-3 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
           <FormControlLabel
             control={
               <Checkbox
@@ -86,7 +86,7 @@ const Login = () => {
           />
           <a
             href="/auth/forgot-password"
-            className="text-sm font-semibold italic text-gray-600 hover:underline"
+            className="pb-2 text-sm font-semibold italic text-gray-600 hover:underline sm:pb-0"
           >
             Forgot password?
           </a>
@@ -98,7 +98,7 @@ const Login = () => {
           {!isLoading.login ? "Login" : <BiLoader size={20} />}
         </Button>
       </form>
-      <div className="bg-gray-800 text-center py-2 text-white text-sm">
+      <div className="bg-gray-800 px-4 py-2 text-center text-sm text-white">
         Haven't any account?{" "}
         <a href="/auth/sign-up" className="italic hover:underline">
           Register now

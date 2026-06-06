@@ -38,11 +38,11 @@ const ResetPassword = () => {
   };
 
   return (
-    <div className="rounded-xl shadow border-gray-100 bg-white z-10 w-fit overflow-hidden">
-      <div className="">
-        <div className="w-100">
-          <form className="p-5" onSubmit={handleResetPassword}>
-            <h3 className="font-bold text-center mb-5 text-3xl uppercase title">
+    <div className="z-10 w-full max-w-md overflow-hidden rounded-xl border border-gray-100 bg-white shadow">
+      <div>
+        <div className="w-full">
+          <form className="p-4 sm:p-6" onSubmit={handleResetPassword}>
+            <h3 className="title mb-5 text-center text-2xl font-bold uppercase sm:text-3xl">
               Reset Password
             </h3>
             <div className="flex gap-5 flex-col">

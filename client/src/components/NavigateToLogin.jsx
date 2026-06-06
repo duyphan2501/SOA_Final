@@ -1,6 +1,7 @@
 import { useContext } from "react";
 import { MyContext } from "../Context/MyContext";
 import { Info, X } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const NavigateToLogin = () => {
   const { setIsShowLoginNavigator, isShowLoginNavigator } =
@@ -25,12 +26,13 @@ const NavigateToLogin = () => {
           <p>Please login first to use this feature</p>
         </div>
         <div className="flex justify-center">
-          <a
-            href="auth/login"
+          <Link
+            to="/auth/login"
+            onClick={() => setIsShowLoginNavigator(false)}
             className=" px-5 py-2 text-white bg-black hover:bg-gray-900 rounded-lg"
           >
             Login now
-          </a>
+          </Link>
         </div>
       </div>
     </div>

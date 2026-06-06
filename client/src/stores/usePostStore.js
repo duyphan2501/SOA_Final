@@ -63,17 +63,13 @@ export const usePostStore = create((set, get) => ({
   },
 
   getPost: async (postId) => {
-    const findPost = get().posts.find((post) => post.id === postId);
+    const findPost = get().posts.find(
+      (post) => String(post.id) === String(postId)
+    );
     if (findPost) return findPost;
-    set({ isLoading: true });
-    try {
-      const res = await API.get(`/posts/${postId}`);
-      return res.data.post;
-    } catch (error) {
-      console.error(error);
-    } finally {
-      set({ isLoading: false });
-    }
+
+    const res = await API.get(`/posts/${postId}`);
+    return res.data.post;
   },
 
   uploadPostMedia: async (formData, axiosPrivate) => {

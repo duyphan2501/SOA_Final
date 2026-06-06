@@ -77,18 +77,30 @@ const sendMessage = async (req, res, next) => {
 const updateMessageStatus = async (req, res, next) => {
   try {
     const { conversationId, messageId, userId, status } = req.body;
-    await MessageModel.markMessageStatus(messageId, userId, status);
+    const allowedStatuses = ["delivered", "read"];
 
-    const eventPayload = {
-      type: "MESSAGE_STATUS_UPDATED",
-      data: { conversationId, messageId, status },
-    };
+    if (!conversationId || !messageId || !userId || !allowedStatuses.includes(status)) {
+      throw createHttpError.BadRequest("Invalid message status update.");
+    }
 
-    await sendQueue("chat_events_to_client", JSON.stringify(eventPayload));
+    const wasUpdated = await MessageModel.markMessageStatus(
+      messageId,
+      userId,
+      status
+    );
+
+    if (wasUpdated) {
+      const eventPayload = {
+        type: "MESSAGE_STATUS_UPDATED",
+        data: { conversationId, messageId, status },
+      };
+
+      await sendQueue("chat_events_to_client", JSON.stringify(eventPayload));
+    }
 
     return res
       .status(200)
-      .json({ message: "Update message status successfully" });
+      .json({ message: "Update message status successfully", wasUpdated });
   } catch (error) {
     next(error);
   }

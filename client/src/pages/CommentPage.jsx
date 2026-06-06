@@ -25,7 +25,7 @@ const CommentPage = () => {
     if (!postId) navigate("/");
   }, [postId, navigate]);
 
-  const { isLoading, getPost } = usePostStore();
+  const getPost = usePostStore((state) => state.getPost);
   const { fetchUserIfNeeded } = useUserStore();
   const {
     getPostComments,
@@ -39,6 +39,8 @@ const CommentPage = () => {
   const { setIsShowLoginNavigator } = useContext(MyContext);
 
   const [post, setPost] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState(null);
   const comments = useCommentStore((state) => state.comments);
 
   const [replyingTo, setReplyingTo] = useState(null);
@@ -46,10 +48,18 @@ const CommentPage = () => {
 
   const [visibleCount, setVisibleCount] = useState(5);
   const loadMoreRef = useRef(null);
+  const fetchRequestRef = useRef(0);
   const axiosPrivate = useAxiosPrivate();
 
   const fetchPostData = useCallback(async () => {
-    if (!postId || isLoading) return;
+    if (!postId) return;
+
+    const requestId = ++fetchRequestRef.current;
+    setIsLoading(true);
+    setLoadError(null);
+    setPost(null);
+    setComments([]);
+
     try {
       const [resPost, resComments] = await Promise.all([
         getPost(postId),
@@ -57,16 +67,37 @@ const CommentPage = () => {
       ]);
 
       const author = await fetchUserIfNeeded(resPost.user_id);
+      if (requestId !== fetchRequestRef.current) return;
+
       const finalPost = { ...resPost, author };
       setComments(resComments);
       setPost(finalPost);
     } catch (error) {
+      if (requestId !== fetchRequestRef.current) return;
+
       console.error("Failed to fetch post data:", error);
+      setLoadError(
+        error.response?.data?.message || "Post is deleted or does not exist."
+      );
+    } finally {
+      if (requestId === fetchRequestRef.current) {
+        setIsLoading(false);
+      }
     }
-  }, [postId, getPost, getPostComments, fetchUserIfNeeded]);
+  }, [
+    postId,
+    getPost,
+    getPostComments,
+    fetchUserIfNeeded,
+    setComments,
+  ]);
 
   useEffect(() => {
     fetchPostData();
+
+    return () => {
+      fetchRequestRef.current += 1;
+    };
   }, [fetchPostData]);
 
   const handleReply = useCallback(
@@ -79,7 +110,7 @@ const CommentPage = () => {
         setReplyingTo(commentId);
       }
     },
-    [replyingTo]
+    [replyingTo, setIsShowLoginNavigator, user]
   );
 
   // Helper function moved outside the component body or into a util file
@@ -177,10 +208,10 @@ const CommentPage = () => {
         Loading...
       </div>
     );
-  if (!post)
+  if (loadError || !post)
     return (
       <div className="flex items-center justify-center h-screen text-xl font-black">
-        Post is deleted or not exist.
+        {loadError || "Post is deleted or does not exist."}
       </div>
     );
 

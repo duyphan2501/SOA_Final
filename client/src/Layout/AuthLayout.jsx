@@ -3,7 +3,7 @@ import FloatingShape from "../components/FloatingShape";
 
 const AuthLayout = () => {
   return (
-    <div className="h-screen bg-linear-to-r from-gray-300 via-gray-500 to-gray-700 flex items-center justify-center relative overflow-hidden z-1">
+    <div className="relative z-1 flex min-h-dvh items-center justify-center overflow-x-hidden overflow-y-auto bg-linear-to-r from-gray-300 via-gray-500 to-gray-700 px-4 py-8 sm:px-6">
       <FloatingShape
         color={"bg-gray-400"}
         size={"size-64"}

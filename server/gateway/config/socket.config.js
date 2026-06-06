@@ -106,7 +106,7 @@ io.on("connection", (socket) => {
 
 async function connectRabbitMQ() {
   try {
-    await consumeQueue("chat_events_to_client", (msg) => {
+    await consumeQueue("chat_events_to_client", async (msg) => {
       if (msg) {
         const event = JSON.parse(msg);
         // Phân loại event và phát sóng (emit) tới đúng phòng/client
@@ -123,6 +123,18 @@ async function connectRabbitMQ() {
               "chat_notification",
               event.data
             );
+
+            if (userSocketMap[event.data.receiverId]) {
+              await sendQueue(
+                "chat_message_status_updates",
+                JSON.stringify({
+                  conversationId: event.data.conversation_id,
+                  messageId: event.data.id,
+                  userId: event.data.receiverId,
+                  status: "delivered",
+                })
+              );
+            }
 
             break;
           case "MESSAGE_STATUS_UPDATED":

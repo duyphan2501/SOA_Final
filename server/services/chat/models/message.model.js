@@ -67,8 +67,6 @@ const MessageModel = {
         [conversationId]
       );
 
-      let receiverId;
-
       if (convoRows.length > 0) {
         receiverId =
           convoRows[0].creator_id === senderId
@@ -148,9 +146,10 @@ const MessageModel = {
       UPDATE message_statuses
       SET 
           status = ?,
-          -- Chỉ cập nhật read_at nếu trạng thái là 'read' (nếu bạn vẫn giữ cột read_at)
           read_at = CASE WHEN ? = 'read' THEN CURRENT_TIMESTAMP ELSE read_at END
       WHERE message_id = ? AND receiver_id = ?
+        AND FIELD(status, 'sent', 'delivered', 'read')
+          < FIELD(?, 'sent', 'delivered', 'read')
     `;
 
     const [result] = await pool.query(query, [
@@ -158,9 +157,9 @@ const MessageModel = {
       status,
       messageId,
       userId,
+      status,
     ]);
 
-    // Trả về true nếu có ít nhất 1 dòng bị ảnh hưởng (cập nhật thành công)
     return result.affectedRows > 0;
   },
 };

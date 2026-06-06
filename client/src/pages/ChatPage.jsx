@@ -15,8 +15,12 @@ const MemoizedConversationItem = memo(ConversationItem);
 const ChatPage = () => {
   const user = useUserStore((state) => state.user);
   const [conversationsWithUsers, setConversationsWithUsers] = useState([]);
-  const { setChatUser, setSelectedConversationId, setIsOpenNewMessage } =
-    useContext(MyContext);
+  const {
+    chatUser,
+    setChatUser,
+    setSelectedConversationId,
+    setIsOpenNewMessage,
+  } = useContext(MyContext);
   const [activeTab, setActiveTab] = useState(0); // 0: Messages, 1: Requests
 
   const mainSocket = useSocketStore((state) => state.mainSocket);
@@ -64,6 +68,38 @@ const ChatPage = () => {
     setSelectedConversationId(conversation.id);
   };
 
+  const handleBackToConversations = () => {
+    setChatUser(null);
+    setSelectedConversationId(null);
+  };
+
+  const syncConversationPreview = useCallback((message) => {
+    setConversationsWithUsers((prevConversations) => {
+      const conversationIndex = prevConversations.findIndex(
+        (conversation) =>
+          String(conversation.id) === String(message.conversation_id)
+      );
+
+      if (conversationIndex === -1) return prevConversations;
+
+      const updatedConversation = {
+        ...prevConversations[conversationIndex],
+        message_id: message.id,
+        content: message.content,
+        message_type: message.type,
+        message_status: message.status || "sent",
+        media_count: message.media_count ?? message.media?.length ?? 0,
+        sender_id: message.sender_id,
+        sent_at: message.sent_at,
+      };
+
+      return [
+        updatedConversation,
+        ...prevConversations.filter((_, index) => index !== conversationIndex),
+      ];
+    });
+  }, []);
+
   useEffect(() => {
     fetchConversations();
   }, [fetchConversations, activeTab]);
@@ -86,31 +122,9 @@ const ChatPage = () => {
   // 2. Lắng nghe tin nhắn mới
   const handleReceiveMessage = useCallback(
     (newMessage) => {
-      console.log(newMessage);
-      setConversationsWithUsers((prevConversations) => {
-        // Tạo bản sao mới của mảng
-        return prevConversations.map((conversation) => {
-          // Nếu tìm thấy cuộc hội thoại cần cập nhật tin nhắn mới
-          if (conversation.id == newMessage.conversation_id) {
-            // Tạo bản sao của object conversation và cập nhật tất cả các trường
-            const newConversation = {
-              ...conversation,
-              message_id: newMessage.id,
-              content: newMessage.content,
-              message_type: newMessage.type,
-              message_status: newMessage.status || "sent",
-              media_count: newMessage.media_count,
-              sender_id: newMessage.sender_id,
-              sent_at: newMessage.sent_at,
-            };
-            return newConversation;
-          }
-          // Nếu không phải, giữ nguyên object cũ
-          return conversation;
-        });
-      });
+      syncConversationPreview(newMessage);
     },
-    [setConversationsWithUsers]
+    [syncConversationPreview]
   );
 
   useEffect(() => {
@@ -126,11 +140,15 @@ const ChatPage = () => {
   if (!user) return;
 
   return (
-    <div className="flex h-screen max-h-screen">
-      <section className="md:w-90 border-r border-gray-300 ">
+    <div className="flex h-[calc(100dvh-4rem)] max-h-[calc(100dvh-4rem)] md:h-screen md:max-h-screen">
+      <section
+        className={`w-full border-r border-gray-300 lg:block lg:w-90 lg:shrink-0 ${
+          chatUser ? "hidden" : "block"
+        }`}
+      >
         <div className="flex flex-col gap-6 p-5">
           <div className="mt-5 flex justify-between items-center">
-            <h5 className="font-semibold text-2xl hidden md:block">
+            <h5 className="font-semibold text-2xl">
               {user.username}
             </h5>
             <span
@@ -140,7 +158,7 @@ const ChatPage = () => {
               <SquarePen />
             </span>
           </div>
-          <div className="tabs tabs-box hidden md:block">
+          <div className="tabs tabs-box">
             <input
               type="radio"
               name="my_tabs_1"
@@ -171,7 +189,7 @@ const ChatPage = () => {
                 <div className="avatar">
                   <div className="w-13 rounded-full bg-gray-300"></div>
                 </div>
-                <div className="md:flex flex-1 flex-col justify-center gap-1 hidden">
+                <div className="flex flex-1 flex-col justify-center gap-1">
                   <div className="h-4 bg-gray-300 rounded w-3/4"></div>
                   <div className="h-3 bg-gray-300 rounded w-1/2"></div>
                 </div>
@@ -208,8 +226,13 @@ const ChatPage = () => {
         </div>
       </section>
       {/* right */}
-      <section className="flex-1">
-        <ChatMain />
+      <section
+        className={`min-w-0 flex-1 md:block ${chatUser ? "block" : "hidden"}`}
+      >
+        <ChatMain
+          onBack={handleBackToConversations}
+          onConversationMessageUpdate={syncConversationPreview}
+        />
       </section>
     </div>
   );

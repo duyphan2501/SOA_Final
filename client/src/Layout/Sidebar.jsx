@@ -1,20 +1,33 @@
 import { useContext, useEffect, useState, useRef } from "react"; // Thêm useRef
-import { data, Outlet, useLocation, useNavigate } from "react-router-dom";
+import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import useUserStore from "../stores/useUserStore";
 import { MyContext } from "../Context/MyContext";
 import useSocketStore from "../stores/useSocketStore";
 import Notification from "../components/Notification";
 import { toast } from "react-toastify";
-import useAxiosPrivate from "../hooks/useAxiosPrivate";
 import Loading from "../components/Loading";
 import useNotificationStore from "../stores/useNotificationStore";
 
 // Navigation Item Component
-const NavItem = ({ icon, label, isActive = false, isCollapsed, onClick }) => {
+const NavItem = ({
+  icon,
+  label,
+  isActive = false,
+  isCollapsed,
+  isMobile,
+  onClick,
+}) => {
   return (
     <button
       onClick={onClick}
-      className={`w-full flex items-center gap-4 px-3 py-3 rounded-lg hover:bg-gray-100 transition-colors ${
+      aria-label={label}
+      className={`flex items-center rounded-lg hover:bg-gray-100 transition-colors ${
+        isMobile
+          ? "h-14 flex-1 justify-center px-2"
+          : isCollapsed
+            ? "w-full justify-center px-0 py-3"
+            : "w-full gap-4 px-3 py-3"
+      } ${
         isActive ? "font-bold" : "font-normal"
       }`}
     >
@@ -29,28 +42,16 @@ const NavItem = ({ icon, label, isActive = false, isCollapsed, onClick }) => {
 // Sidebar Component
 const Sidebar = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [screenWidth, setScreenWidth] = useState(window.innerWidth);
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
 
   useEffect(() => {
-  const handleResize = () => {
-    const width = window.innerWidth;
-    setScreenWidth(width);
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
 
-    if (width < 780) {
-      setIsCollapsed(true);
-    } else {
-      setIsCollapsed(false);
-    }
-  };
-
-  handleResize();
-
-  window.addEventListener("resize", handleResize);
-
-  return () => {
-    window.removeEventListener("resize", handleResize);
-  };
-}, []);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   const { refreshToken, isLoading, refreshUser } = useUserStore();
 
@@ -71,6 +72,24 @@ const Sidebar = () => {
   const getNotifications = useNotificationStore((s) => s.getNotifications);
   const notifications = useNotificationStore((s) => s.notifications);
   const [notificationsUnreadNumber, setNotificationsUnreadNumber] = useState(0);
+  const isCompact = isMobile || isCollapsed;
+
+  useEffect(() => {
+    setShowNotifications(false);
+  }, [location.pathname]);
+
+  useEffect(() => {
+    if (!showNotifications) return;
+
+    const handleEscape = (event) => {
+      if (event.key === "Escape") {
+        setShowNotifications(false);
+      }
+    };
+
+    document.addEventListener("keydown", handleEscape);
+    return () => document.removeEventListener("keydown", handleEscape);
+  }, [showNotifications]);
 
   //Audio
   const audioRef = useRef(new Audio("/sound/new_notification.mp3"));
@@ -138,7 +157,7 @@ const Sidebar = () => {
         } else {
           await refreshUser();
         }
-      } catch (error) {
+      } catch {
         if (isMounted) {
           const allowedPaths = ["/", "/post/"];
           const isAllowedPath =
@@ -309,12 +328,22 @@ const Sidebar = () => {
         <div className="flex h-screen">
           {/* Sidebar */}
           <aside
-            className={`${
-              isCollapsed ? "w-20" : "w-64"
-            } border-r border-gray-200 bg-white transition-all duration-300 flex-col fixed h-full z-50 flex`}
+            className={`fixed z-50 flex bg-white transition-all duration-300 ${
+              isMobile
+                ? "bottom-0 left-0 right-0 h-16 border-t border-gray-200"
+                : `${isCollapsed ? "w-20" : "w-64"} top-0 left-0 h-full flex-col border-r border-gray-200`
+            }`}
           >
             {/* Logo */}
-            <div className="h-24 flex items-center px-6 border-b border-gray-200">
+            <div
+              className={`h-24 items-center border-b border-gray-200 ${
+                isMobile
+                  ? "hidden"
+                  : isCollapsed
+                    ? "flex justify-center px-0"
+                    : "flex px-6"
+              }`}
+            >
               {isCollapsed ? (
                 <svg className="w-8 h-8" viewBox="0 0 48 48" fill="none">
                   <path
@@ -341,20 +370,34 @@ const Sidebar = () => {
                 </h1>
               )}
             </div>
-            <nav className="flex-1 py-4 px-3 space-y-1">
+            <nav
+              className={
+                isMobile
+                  ? "flex h-full w-full items-center justify-around px-1"
+                  : "flex-1 space-y-1 px-3 py-4"
+              }
+            >
               {navItems.map((item, index) => {
                 if (item.label === "Notifications") {
                   return (
-                    <div className="relative" key={index}>
+                    <div
+                      className={`relative ${isMobile ? "flex flex-1" : ""}`}
+                      key={index}
+                    >
                       <NavItem
                         icon={item.icon}
                         label={item.label}
                         isActive={location.pathname === item.href}
-                        isCollapsed={isCollapsed}
+                        isCollapsed={isCompact}
+                        isMobile={isMobile}
                         onClick={item.onClick}
                       />
                       {notificationsUnreadNumber !== 0 && (
-                        <span className="absolute top-1 left-1 bg-red-500 text-white text-xs font-bold w-5 h-5 rounded-full text-center flex items-center justify-center">
+                        <span
+                          className={`absolute top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-center text-xs font-bold text-white ${
+                            isCompact ? "left-1/2 ml-1" : "left-1"
+                          }`}
+                        >
                           {notificationsUnreadNumber}
                         </span>
                       )}
@@ -367,7 +410,8 @@ const Sidebar = () => {
                       icon={item.icon}
                       label={item.label}
                       isActive={location.pathname === item.href}
-                      isCollapsed={isCollapsed}
+                      isCollapsed={isCompact}
+                      isMobile={isMobile}
                       onClick={item.onClick}
                     />
                   );
@@ -376,7 +420,11 @@ const Sidebar = () => {
             </nav>
 
             {/* Bottom Section */}
-            <div className="p-3 border-t border-gray-200 space-y-1">
+            <div
+              className={`p-3 border-t border-gray-200 space-y-1 ${
+                isMobile ? "hidden" : ""
+              }`}
+            >
               {/* More Button with Dropdown */}
               <div className="relative" ref={dropdownRef}>
                 <button
@@ -384,7 +432,11 @@ const Sidebar = () => {
                     e.preventDefault();
                     setIsOpen(!isOpen);
                   }}
-                  className="w-full flex items-center gap-4 px-3 py-3 rounded-lg hover:bg-gray-100 transition-colors"
+                  className={`w-full flex items-center py-3 rounded-lg hover:bg-gray-100 transition-colors ${
+                    isCollapsed
+                      ? "justify-center px-0"
+                      : "gap-4 px-3"
+                  }`}
                 >
                   <div className="w-6 h-6 flex items-center justify-center flex-shrink-0">
                     <svg
@@ -456,7 +508,11 @@ const Sidebar = () => {
               {/* Toggle Button */}
               <button
                 onClick={() => setIsCollapsed(!isCollapsed)}
-                className="w-full flex items-center gap-3 px-3 py-3 rounded-lg hover:bg-gray-100 transition-colors text-gray-700"
+                className={`w-full flex items-center py-3 rounded-lg hover:bg-gray-100 transition-colors text-gray-700 ${
+                  isCollapsed
+                    ? "justify-center px-0"
+                    : "gap-3 px-3"
+                }`}
               >
                 <div className="w-6 h-6 flex items-center justify-center">
                   {isCollapsed ? (
@@ -488,8 +544,12 @@ const Sidebar = () => {
 
           {/* Main Content */}
           <main
-            className={`flex-1 overflow-auto bg-gray-50 lg:pb-0 transition-all duration-300 ${
-              isCollapsed ? "ml-20" : "md:ml-64"
+            className={`flex-1 overflow-auto bg-gray-50 transition-all duration-300 ${
+              isMobile
+                ? "ml-0 pb-16"
+                : isCollapsed
+                  ? "ml-20"
+                  : "ml-64"
             }`}
           >
             <Outlet />
@@ -510,13 +570,53 @@ const Sidebar = () => {
 
           {/* Notification Panel */}
           {showNotifications && (
-            <div
-              className={`block fixed top-0 h-full w-96 bg-white border-r border-gray-200 transform transition-transform duration-300 ease-in-out z-40 shadow-lg ${
-                isCollapsed ? "left-20" : "left-64"
-              }`}
-            >
-              <Notification isShow={showNotifications}/>
-            </div>
+            <>
+              {isMobile && (
+                <button
+                  type="button"
+                  aria-label="Close notifications"
+                  className="fixed inset-x-0 top-0 bottom-16 z-[55] bg-black/40"
+                  onClick={() => setShowNotifications(false)}
+                />
+              )}
+              <section
+                role="dialog"
+                aria-modal={isMobile}
+                aria-label="Notifications"
+                className={`fixed flex flex-col bg-white shadow-2xl ${
+                  isMobile
+                    ? "inset-x-0 bottom-16 top-12 z-[60] overflow-hidden rounded-t-2xl"
+                    : `top-0 z-40 h-full w-96 border-r border-gray-200 ${
+                        isCollapsed ? "left-20" : "left-64"
+                      }`
+                }`}
+              >
+                <header className="flex items-center justify-between border-b border-gray-200 px-4 py-3">
+                  <h2 className="text-xl font-bold text-gray-900 sm:text-2xl">
+                    Notifications
+                  </h2>
+                  <button
+                    type="button"
+                    aria-label="Close notifications"
+                    onClick={() => setShowNotifications(false)}
+                    className="flex size-10 items-center justify-center rounded-full text-gray-600 hover:bg-gray-100 hover:text-black"
+                  >
+                    <svg
+                      className="size-6"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      viewBox="0 0 24 24"
+                    >
+                      <path d="M6 6l12 12M18 6L6 18" />
+                    </svg>
+                  </button>
+                </header>
+                <div className="min-h-0 flex-1">
+                  <Notification isShow={showNotifications} />
+                </div>
+              </section>
+            </>
           )}
         </div>
       )}

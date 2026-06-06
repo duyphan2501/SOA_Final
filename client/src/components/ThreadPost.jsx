@@ -75,16 +75,42 @@ const ThreadPost = ({ postAuthor = null, post, isCommentPage = false }) => {
     }
   }, [user, post.id]);
 
-  const handleCopyLink = () => {
-    const postLink = `${window.location.origin}/post/${post.id}/comments`;
-    navigator.clipboard.writeText(postLink).then(
-      () => {
-        toast.success("Post link copied to clipboard!");
-      },
-      (err) => {
-        toast.error("Could not copy text: ", err);
+  const copyWithFallback = (text) => {
+    const textArea = document.createElement("textarea");
+    textArea.value = text;
+    textArea.setAttribute("readonly", "");
+    textArea.style.position = "fixed";
+    textArea.style.opacity = "0";
+    document.body.appendChild(textArea);
+    textArea.select();
+
+    try {
+      const copied = document.execCommand("copy");
+      if (!copied) throw new Error("Copy command was rejected");
+    } finally {
+      document.body.removeChild(textArea);
+    }
+  };
+
+  const handleCopyLink = async () => {
+    const postLink = new URL(
+      `/post/${post.id}/comments`,
+      window.location.origin
+    ).toString();
+
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(postLink);
+      } else {
+        copyWithFallback(postLink);
       }
-    );
+
+      setIsOpen3dotMenu(false);
+      toast.success("Post link copied to clipboard!");
+    } catch (error) {
+      console.error("Could not copy post link:", error);
+      toast.error("Could not copy the post link.");
+    }
   };
 
   const handleDeletePost = async () => {

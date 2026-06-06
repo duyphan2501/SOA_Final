@@ -16,12 +16,12 @@ const ForgotPassword = () => {
   };
 
   return (
-    <div className="rounded-xl shadow border-gray-100 bg-white z-10 w-fit overflow-hidden">
-      <div className="">
+    <div className="z-10 w-full max-w-md overflow-hidden rounded-xl border border-gray-100 bg-white shadow">
+      <div>
         {isSuccess ? (
           <>
-            <div className="p-5 w-96 flex flex-col items-center">
-              <h3 className="font-bold text-center text-3xl uppercase title mb-3">
+            <div className="flex w-full flex-col items-center p-4 sm:p-6">
+              <h3 className="title mb-3 text-center text-2xl font-bold uppercase sm:text-3xl">
                 Request successfully!
               </h3>
               <p className="text-center">
@@ -48,10 +48,10 @@ const ForgotPassword = () => {
           </>
         ) : (
           <>
-            <div className="">
-              <div className="w-100">
-                <form className="p-5" onSubmit={handleSubmit}>
-                  <h3 className="font-bold text-center text-3xl uppercase title mb-3">
+            <div>
+              <div className="w-full">
+                <form className="p-4 sm:p-6" onSubmit={handleSubmit}>
+                  <h3 className="title mb-3 text-center text-2xl font-bold uppercase sm:text-3xl">
                     Forgot Password
                   </h3>
                   <p className="text-center mb-5">
